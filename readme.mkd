@@ -1,0 +1,130 @@
+# 🖼️ CASTADI 🖋️
+
+## What is it?
+
+**Castadai** is turns your text files in the castadai format into comic book pages with dialog bubbles, ai generated images (using stable diffusion) and automatic panel creation!
+
+## Example
+
+```mk
+-Page1
+
+location: public park, yard, outside, park
+
+[misty] weaving, saying hey, happy, smiling
+"Heyy!!"
+
+"This is an example"
+"of what castadi can do!"
+
+[misty] curious, surpries, happy, question
+"What do you think?"
+
+```
+
+![Alt text](example_page.jpg)
+
+## How is it done?
+
+Castadi reads a text file and a settings file, and uses the stable diffusion webui local api to generate pictures based on your these files.
+
+## Settings.json
+
+This is a settings file castadi reads for configuration. Here is an example one.
+
+```json
+{
+  "canvas_width": 1080,
+  "canvas_height": 1920,
+  "panel_min_width_percent": 0.21,
+  "panel_min_height_percent": 0.117,
+  "image_zoom": "4/9",
+  "border_width": 7,
+  "default_bubble": {
+    "font_size": 24,
+    "bubble_color": "(20, 20, 20)",
+    "text_color": "white",
+    "font": "C:\\Windows\\Fonts\\CascadiaMonoPL-ExtraLight.ttf"
+  },
+
+  "prompt_prefix": "(masterpiece, best quality:1.1)",
+  "negative_prompt": "(bad quality, low quality:1.1), easynegative",
+
+  "characters": {
+    "misty": {
+      "tags": "misty \\(pokemon\\), <lora:Misty:1>, yellow shirt, crop top, suspender shorts"
+    },
+    "popo": {
+      "tags": "male, guy, dark hair, white suit, black pants",
+      "bubble": {
+        "bubble_color": "(180, 180, 180)"
+      }
+    }
+  }
+}
+```
+
+## Syntax
+
+Let's go through the example above with some changes:
+
+```mk
+-Page1(min: (0.3, 0.3))
+
+location: public park, yard, outside, park
+
+[misty] weaving, saying hey, happy, smiling
+"Heyy!!"
+
+"This is an example"
+"of what castadi can do!"
+
+split: w
+
+[misty] curious, surpries, happy, question
+"What do you think?"
+```
+
+```mk
+-Page1(min: (0.3, 0.3))
+```
+
+We start with a **page** notation: `Page1(min: (0.3, 0.3))`.
+The parametes are optional. Currently only one exists: `min`. It is used to determine the minimum panel size as a percentage of the page size.
+
+Each page is comprised of **panels**, which are **separated by an empty line.**
+
+```mk
+location: public park, yard, outside, park
+```
+
+Before starting the first panel, we specify a location. Each panel can have a different location that would be appended to the end of the prompt for stable diffusion. If no location is specified for each panel we take the previous one.
+
+```mk
+[misty] weaving, saying hey, happy, smiling
+"Heyy!!"
+```
+
+Each panel is comprised of **events**, these can be _scene descriptions_ or _dialog_. They are separated by new lines. Meaning each line is an event.
+
+We start with a scene description, we use the character notation `[misty]`, which will look inside our settings.json for a character named misty and replace the notation with the character's prompt tags.
+
+We went down a line to signal a new event. This time it's a dialog. Each dialog needs to be said by a character, but we don't specify one in this case because it's the last character we mentioned, which would be misty.
+
+```mk
+"This is another example"
+[popo] "yep, it sure is!"
+```
+
+If we look at then next panel, there are 2 more dialogs. The first is of misty because we didn't specify another. The second one would be of popo. These 2 notations are the only dialog notations we have.
+
+```mk
+split: h
+
+[popo] curious, surpries, question, apathetic
+"Who are we talking to tho"
+```
+
+we then specify the split between the previous panel and the next (as a horizontal split). Unlike the location, this resets every panel. Meaning if we don't specify it, it would be randomly generated.
+
+That's basically it!
