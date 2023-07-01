@@ -79,7 +79,7 @@ location: public park, yard, outside, park
 "This is an example"
 "of what castadi can do!"
 
-split: w
+split: h
 
 [misty] curious, surpries, happy, question
 "What do you think?"
