@@ -9,12 +9,20 @@ def draw_rectangles(images, locations, bubbles=None, outline_width=5,
                     default_bubble_color=(20, 20, 20),
                     default_text_color="white",
                     default_font='C:\Windows\Fonts\CascadiaMonoPL-ExtraLight.ttf',
+                    reverse=False,
                     b_big_var=0.3, b_small_var=0.15,
+                    background=None
                     ):
     canvas_width, canvas_height = canvas_size
 
     # Create a blank canvas
-    canvas = Image.new("RGB", (canvas_width, canvas_height), "white")
+    if background is None:
+        canvas = Image.new("RGB", (canvas_width, canvas_height),
+                           "black" if reverse else "white")
+    else:
+        background = Image.open(BytesIO(background))
+        canvas = background.resize(canvas_size, Image.ANTIALIAS)
+
     draw = ImageDraw.Draw(canvas)
 
     for image, location, bubble_list in zip(images or [None] * len(locations), locations, bubbles or [None] * len(locations)):
@@ -34,9 +42,15 @@ def draw_rectangles(images, locations, bubbles=None, outline_width=5,
         top_left = (x, y)
         bottom_right = (x + width, y + height)
 
-        # Draw the rectangle outline with increased width
-        draw.rectangle([top_left, bottom_right],
-                       outline="black", width=outline_width)
+        if reverse:
+            pad = outline_width
+            top_left = top_left[0] + pad, top_left[1] + pad
+            bottom_right = bottom_right[0] - pad, bottom_right[1] - pad
+
+        if background is None:
+            # Draw the rectangle outline with increased width
+            draw.rectangle([top_left, bottom_right],
+                           outline="white" if reverse else "black", width=outline_width)
 
         if bubble_list is not None:
             b_positions = [(x, y)]

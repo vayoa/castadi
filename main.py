@@ -1,3 +1,7 @@
+import base64
+from io import BytesIO
+import cv2
+import numpy as np
 import json
 import math
 import uuid
@@ -5,6 +9,7 @@ import scripter as s
 import image_generator as ig
 import panel_generator as pg
 from ast import literal_eval
+from PIL import ImageOps
 
 
 SCRIPT_FILE = 'example/script.text'
@@ -20,17 +25,24 @@ def save_encoded_image(img: str, output_path: str):
 
 
 def get_images(panels, panels_script, characters, image_zoom,
-               prompt_prefix=None, negative_prompt=None, page_id='0'):
+               prompt_prefix=None, negative_prompt=None, page_id='0',
+               controlnet_payload=None):
     images = []
     for i, (panel, panel_script) in enumerate(zip(panels, panels_script)):
-        _, _, width, height = panel
+        x, y, width, height = panel
         baked = panel_script.bake(characters)
+        width = int(math.floor(width * image_zoom))
+        height = int(math.floor(height * image_zoom))
+        print(
+            f'drawing panel {i}, size {width}x{height} location ({x},{y})...')
         img = ig.generate(
             prompt=prompt_prefix + baked,
             negative_prompt=negative_prompt or "",
-            width=int(math.floor(width * image_zoom)),
-            height=int(math.floor(height * image_zoom)),
+            width=width,
+            height=height,
+            controlnet_payload=controlnet_payload
         )
+        print('done panel')
         images.append(img)
         save_encoded_image(img, f'output/panels/{page_id}-{i}.png')
     return images
@@ -84,7 +96,7 @@ if __name__ == '__main__':
     with open(SCRIPT_FILE, 'r', encoding='utf-8') as file:
         text = file.read()
 
-    script = s.script(text, characters)
+    script = s.script(text)
 
     for i, page in enumerate(script):
         panels_script = page.panels
@@ -95,13 +107,16 @@ if __name__ == '__main__':
         panels = pg.get_panels(len(panels_script), panels=[(0, 0, *canvas_size)],
                                min_size=min_page_size, split_on_width=page.get_splits())
         page_id = str(uuid.uuid4())
-        print(panels)
+
+        page.prep(characters)
+        controlnet = page.mode == 'controlnet'
 
         canvas = pg.draw_rectangles(
             get_images(panels, panels_script, characters, image_zoom,
-                       prompt_prefix, negative_prompt, page_id),
+                       prompt_prefix, negative_prompt, page_id) if not controlnet else None,
             panels,
-            page.get_dialog(),
+            page.get_dialog() if not controlnet else None,
+            reverse=controlnet,
             outline_width=outline_width,
             canvas_size=canvas_size,
             default_font_size=default_bubble[0],
@@ -110,6 +125,46 @@ if __name__ == '__main__':
             default_font=default_bubble[3],
         )
 
+        if controlnet:
+            # canvas = ImageOps.invert(canvas)
+            canvas.save(f'output/layouts/{page_id}.png')
+
+            # Convert the Pillow image to a NumPy array
+            image_array = np.array(canvas)
+
+            # Convert the NumPy array to BGR order (required by cv2)
+            image_bgr = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
+
+            # Encode the image into PNG format
+            retval, buffer = cv2.imencode('.png', image_bgr)
+
+            # Convert the image buffer to base64
+            img_str = base64.b64encode(buffer).decode('utf-8')
+
+            panel = [(0, 0, *canvas_size)]
+
+            canvas = pg.draw_rectangles(
+                None,
+                panels,
+                page.get_dialog(),
+                background=get_images(panel, panels_script, characters, image_zoom,
+                                      prompt_prefix, negative_prompt, page_id,
+                                      controlnet_payload={
+                                          "input_image": img_str,
+                                          "module": "none",
+                                          "model": "control_v11p_sd15s2_lineart_anime [3825e83e]",
+                                          "weight": 2,
+                                          "control_mode": 2,
+                                      })[0],
+                outline_width=outline_width,
+                canvas_size=canvas_size,
+                default_font_size=default_bubble[0],
+                default_bubble_color=default_bubble[1],
+                default_text_color=default_bubble[2],
+                default_font=default_bubble[3],
+            )
+
+        print(f'finished generation {page_id}.jpg')
         canvas.save(f'output/pages/{page_id}.jpg')
 
     canvas.save('output/preview.jpg')

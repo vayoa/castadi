@@ -72,12 +72,14 @@ class Page:
             if 'min' in props_dict:
                 props_dict['min'] = literal_eval(props_dict['min'])
 
-            return Page(m.group(1), panel_min_percent=props_dict.get('min', None))
+            return Page(m.group(1), panel_min_percent=props_dict.get('min', None),
+                        mode=props_dict.get('mode', 'separate'))
 
-    def __init__(self, name, panels=None, panel_min_percent=None):
+    def __init__(self, name, panels=None, panel_min_percent=None, mode='separate'):
         self.name = name
         self.panels = panels if panels is not None else []
         self.panel_min_percent = panel_min_percent
+        self.mode = mode
 
     def get_dialog(self):
         return [p.get_dialog() for p in self.panels]
@@ -88,9 +90,14 @@ class Page:
     def prep(self, characters):
         for panel in self.panels:
             panel.prep(characters)
+        if self.mode == 'controlnet':
+            panel = Panel(self.panels[0].location)
+            for p in self.panels:
+                panel.events.extend(p.events)
+            return [panel]
 
 
-def script(text, characters):
+def script(text):
     lines = text.split('\n')
     pages = []
     current_page = None
@@ -105,7 +112,6 @@ def script(text, characters):
             continue
         if line.startswith('-'):
             if current_page is not None:
-                current_page.prep(characters)
                 pages.append(current_page)
             current_page = Page.parse(line)
         elif line.startswith('location:'):
@@ -139,7 +145,6 @@ def script(text, characters):
         split = None
 
     if current_page is not None:
-        current_page.prep(characters)
         pages.append(current_page)
 
     return pages
