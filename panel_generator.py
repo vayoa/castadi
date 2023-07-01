@@ -1,5 +1,5 @@
 import random
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from io import BytesIO
 
 
@@ -43,14 +43,15 @@ def draw_rectangles(images, locations, bubbles=None, outline_width=5,
         bottom_right = (x + width, y + height)
 
         if reverse:
-            pad = outline_width
+            pad = outline_width * 1.5
             top_left = top_left[0] + pad, top_left[1] + pad
             bottom_right = bottom_right[0] - pad, bottom_right[1] - pad
 
         if background is None:
             # Draw the rectangle outline with increased width
             draw.rectangle([top_left, bottom_right],
-                           outline="white" if reverse else "black", width=outline_width)
+                           outline="white" if reverse else "black",
+                           width=int(outline_width * 2) if reversed else outline_width)
 
         if bubble_list is not None:
             b_positions = [(x, y)]
@@ -98,6 +99,19 @@ def draw_rectangles(images, locations, bubbles=None, outline_width=5,
                 text_y = bubble_y + 10  # Add padding
                 draw.text((text_x, text_y), bubble_text,
                           fill=font_color, font=bubble_font)
+
+    if images is None and reverse:
+        canvas = canvas.filter(ImageFilter.GaussianBlur(4))
+        draw = ImageDraw.Draw(canvas)
+
+        for location in locations:
+            x, y, width, height = location
+
+            top_left = x, y
+            bottom_right = x + width, y + height
+
+            draw.rectangle([top_left, bottom_right],
+                           outline="black", width=outline_width)
 
     return canvas
 

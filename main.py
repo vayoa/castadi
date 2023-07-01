@@ -3,13 +3,11 @@ from io import BytesIO
 import cv2
 import numpy as np
 import json
-import math
 import uuid
 import scripter as s
 import image_generator as ig
 import panel_generator as pg
 from ast import literal_eval
-from PIL import ImageOps
 
 
 SCRIPT_FILE = 'example/script.text'
@@ -31,8 +29,8 @@ def get_images(panels, panels_script, characters, image_zoom,
     for i, (panel, panel_script) in enumerate(zip(panels, panels_script)):
         x, y, width, height = panel
         baked = panel_script.bake(characters)
-        width = int(math.floor(width * image_zoom))
-        height = int(math.floor(height * image_zoom))
+        width = int(width * image_zoom)
+        height = int(height * image_zoom)
         print(
             f'drawing panel {i}, size {width}x{height} location ({x},{y})...')
         img = ig.generate(
@@ -126,7 +124,6 @@ if __name__ == '__main__':
         )
 
         if controlnet:
-            # canvas = ImageOps.invert(canvas)
             canvas.save(f'output/layouts/{page_id}.png')
 
             # Convert the Pillow image to a NumPy array
