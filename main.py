@@ -43,13 +43,13 @@ def parse_color(color):
     return color
 
 
-def parse_bubble(bjs):
+def parse_bubble(bjs, default_bubble=(None, None, None, None)):
     if bjs is None:
         return (None, ) * 4
-    return (bjs.get('font_size', 12),
-            parse_color(bjs.get('bubble_color', "(20, 20, 20)")),
-            parse_color(bjs.get('text_color', "white")),
-            bjs.get('font', "C:WindowsFontsCascadiaMonoPL-ExtraLight.ttf"))
+    return (bjs.get('font_size', default_bubble[0]),
+            parse_color(bjs.get('bubble_color', str(default_bubble[1]))),
+            parse_color(bjs.get('text_color', default_bubble[2])),
+            bjs.get('font', default_bubble[3]))
 
 
 if __name__ == '__main__':
@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
         image_zoom = eval(json_data.get('image_zoom', '1'))
 
-        default_bubble = parse_bubble(json_data.get('default_bubble', None))
+        default_bubble = parse_bubble(json_data.get('default_bubble'))
 
         outline_width = json_data.get('border_width', 5)
 
@@ -76,15 +76,15 @@ if __name__ == '__main__':
         characters = {}
         for character in character_data:
             c = character_data[character]
-            bubble = parse_bubble(c.get('bubble', None))
+            bubble = parse_bubble(c.get('bubble', None), default_bubble)
             if bubble is None:
                 bubble = default_bubble
-            characters[character] = s.Character(c['tags'], bubble)
+            characters[character] = s.Character(character, c['tags'], bubble)
 
     with open(SCRIPT_FILE, 'r', encoding='utf-8') as file:
         text = file.read()
 
-    script = s.script(text)
+    script = s.script(text, characters)
 
     for i, page in enumerate(script):
         panels_script = page.panels
@@ -100,7 +100,6 @@ if __name__ == '__main__':
         canvas = pg.draw_rectangles(
             get_images(panels, panels_script, characters, image_zoom,
                        prompt_prefix, negative_prompt, page_id),
-
             panels,
             page.get_dialog(),
             outline_width=outline_width,

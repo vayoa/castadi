@@ -127,4 +127,5 @@ split: h
 
 we then specify the split between the previous panel and the next (as a horizontal split). Unlike the location, this resets every panel. Meaning if we don't specify it, it would be randomly generated.
 
-That's basically it!
+That's basically it! This is our output:
+![Alt text](example_page_2.jpg)

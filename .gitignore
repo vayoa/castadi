@@ -1,0 +1,5 @@
+example/
+output/
+.vscode/
+.idea/
+__pycache__/

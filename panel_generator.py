@@ -8,7 +8,7 @@ def draw_rectangles(images, locations, bubbles=None, outline_width=5,
                     default_font_size=12,
                     default_bubble_color=(20, 20, 20),
                     default_text_color="white",
-                    default_font='C:\\Windows\\Fonts\\CascadiaMonoPL-ExtraLight.ttf',
+                    default_font='C:\Windows\Fonts\CascadiaMonoPL-ExtraLight.ttf',
                     b_big_var=0.3, b_small_var=0.15,
                     ):
     canvas_width, canvas_height = canvas_size

@@ -3,7 +3,8 @@ import re
 
 
 class Character():
-    def __init__(self, tags, bubble_props=None):
+    def __init__(self, name, tags, bubble_props=None):
+        self.name = name
         self.tags = tags
         self.bubble_props = bubble_props
 
@@ -11,8 +12,12 @@ class Character():
 class Event:
     def __init__(self, text, character=None):
         self.text = text
-        self.character = Character(
-            character) if character is not None else None
+        self.character = Character(character,
+                                   character) if character is not None else None
+
+    def prep(self, characters):
+        if self.character is not None:
+            self.character = characters[self.character.name]
 
     def bake(self, characters):
         baked = re.sub(r'\[(.*?)\]', lambda match: characters.get(
@@ -33,6 +38,10 @@ class Panel:
         self.events = events if events is not None else []
         self.split_on_width = split_on_width
 
+    def prep(self, characters):
+        for event in self.events:
+            event.prep(characters)
+
     def bake(self, characters):
         baked = ', '.join([e.bake(characters)
                            for e in self.events if e.character is None])
@@ -48,7 +57,6 @@ class Panel:
 
 
 class Page:
-
     def parse(line):
         m = re.match(r"-(\w+)(?:\((.+)\))?", line)
         if m:
@@ -77,8 +85,12 @@ class Page:
     def get_splits(self):
         return [p.split_on_width for p in self.panels[1:]] + [None]
 
+    def prep(self, characters):
+        for panel in self.panels:
+            panel.prep(characters)
 
-def script(text):
+
+def script(text, characters):
     lines = text.split('\n')
     pages = []
     current_page = None
@@ -93,6 +105,7 @@ def script(text):
             continue
         if line.startswith('-'):
             if current_page is not None:
+                current_page.prep(characters)
                 pages.append(current_page)
             current_page = Page.parse(line)
         elif line.startswith('location:'):
@@ -126,6 +139,7 @@ def script(text):
         split = None
 
     if current_page is not None:
+        current_page.prep(characters)
         pages.append(current_page)
 
     return pages
