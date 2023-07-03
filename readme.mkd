@@ -27,6 +27,13 @@ location: public park, yard, outside, park
 
 ![Alt text](example_page.jpg)
 
+## How can I help?
+I have a lot of ideas for where to take this, but not enough time. If you think you can help with any of these it would be greatly appriciated!
+
+- [ ] Controlnet(**currently experimental**) - use controlnet with panel creation to have a more consistant page!
+- [ ] Better ui and extension integration
+- [ ] Fully ai generated content - meaning some sort of an integration with an llm to basically have prompt-to-manga!
+
 ## How is it done?
 
 Castadi reads a text file and a settings file, and uses the stable diffusion webui local api to generate pictures based on your these files.
