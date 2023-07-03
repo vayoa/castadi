@@ -1,6 +1,6 @@
 import modules.scripts as scripts
 import gradio as gr
-import main_runner as mr
+from castadi import main_runner as mr
 
 from modules import script_callbacks
 
