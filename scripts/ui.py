@@ -49,7 +49,22 @@ def on_ui_tabs():
             with gr.Tab("Script"):
                 script = gr.TextArea(
                     lines=20,
-                    show_label=False,
+                    label='start with --api for this extension to work.',
+                    placeholder='''\
+-Page1
+
+location: public park, yard, outside, park
+
+[misty] weaving, saying hey, happy, smiling
+"Heyy!!"
+
+"This is an example"
+"of what castadi can do!"
+
+[misty] curious, surpries, happy, question
+"What do you think?"
+
+                    '''
                 )
 
             with gr.Tab("Settings"):
@@ -69,7 +84,7 @@ def on_ui_tabs():
                 gallery = gr.Gallery(
                     label="Dummy Image",
                     show_label=False,
-                    preview=True,
+                    preview=False,
                     object_fit='cover',
                 )
 
