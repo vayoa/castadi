@@ -56,7 +56,7 @@ def parse_bubble(bjs, default_bubble=(None, None, None, None)):
 
 
 def generate(raw_script, raw_settings):
-    json_data = json.load(raw_settings)
+    json_data = json.loads(raw_settings)
     character_data = json_data.get('characters', {})
 
     canvas_size = json_data.get(
