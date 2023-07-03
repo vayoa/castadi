@@ -50,7 +50,7 @@ def on_ui_tabs():
                 script = gr.TextArea(
                     lines=20,
                     label='start with --api for this extension to work.',
-                    placeholder='''\
+                    placeholder='''Your script, example:
 -Page1
 
 location: public park, yard, outside, park
