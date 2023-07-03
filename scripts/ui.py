@@ -4,7 +4,7 @@ from castadi import main_runner as mr
 
 from modules import script_callbacks
 
-DEFAULT_SETTINGS = '''
+DEFAULT_SETTINGS = r'''
 {
   "canvas_width": 1080,
   "canvas_height": 1920,
@@ -40,7 +40,6 @@ DEFAULT_SETTINGS = '''
     // }
   }
 }
-
 '''
 
 
@@ -74,7 +73,8 @@ def on_ui_tabs():
 
         btn.click(
             dummy_images,
-            inputs=[script, settings],
+            inputs=[script, '\n'.join([l for l in settings.split(
+                '\n') if not l.strip().startswith('//')])],
             outputs=[gallery],
         )
 
