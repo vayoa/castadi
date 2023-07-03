@@ -4,6 +4,8 @@
 
 **Castadai** is turns your text files in the castadai format into comic book pages with dialog bubbles, ai generated images (using stable diffusion) and automatic panel creation!
 
+![image](https://github.com/vayoa/castadi/assets/89143290/ff993aab-fcf1-4a09-aab9-2b8d5fe99299)
+
 ## Example
 
 ```mk
