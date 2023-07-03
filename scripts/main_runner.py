@@ -10,10 +10,6 @@ import panel_generator as pg
 from ast import literal_eval
 
 
-SCRIPT_FILE = 'example/script.text'
-SETTINGS_FILE = 'example/settings.json'
-
-
 def save_encoded_image(img: str, output_path: str):
     """
     Save the given image to the given output path.
@@ -42,7 +38,7 @@ def get_images(panels, panels_script, characters, image_zoom,
         )
         print('done panel')
         images.append(img)
-        save_encoded_image(img, f'output/panels/{page_id}-{i}.png')
+        # save_encoded_image(img, f'output/panels/{page_id}-{i}.png')
     return images
 
 
@@ -62,39 +58,36 @@ def parse_bubble(bjs, default_bubble=(None, None, None, None)):
             bjs.get('font', default_bubble[3]))
 
 
-if __name__ == '__main__':
+def generate(raw_script, raw_settings):
+    json_data = json.load(raw_settings)
+    character_data = json_data.get('characters', {})
 
-    with open(SETTINGS_FILE, 'r', encoding='utf-8') as file:
-        json_data = json.load(file)
-        character_data = json_data.get('characters', {})
+    canvas_size = json_data.get(
+        'canvas_width', 480), json_data.get('canvas_height', 854)
 
-        canvas_size = json_data.get(
-            'canvas_width', 480), json_data.get('canvas_height', 854)
+    panel_min_percent = json_data.get("panel_min_width_percent", 0.21), json_data.get(
+        "panel_min_height_percent", 0.117)
 
-        panel_min_percent = json_data.get("panel_min_width_percent", 0.21), json_data.get(
-            "panel_min_height_percent", 0.117)
+    image_zoom = eval(json_data.get('image_zoom', '1'))
 
-        image_zoom = eval(json_data.get('image_zoom', '1'))
+    default_bubble = parse_bubble(json_data.get('default_bubble'))
 
-        default_bubble = parse_bubble(json_data.get('default_bubble'))
+    outline_width = json_data.get('border_width', 5)
 
-        outline_width = json_data.get('border_width', 5)
+    prompt_prefix = json_data.get('prompt_prefix', "")
+    negative_prompt = json_data.get('negative_prompt', "")
 
-        prompt_prefix = json_data.get('prompt_prefix', "")
-        negative_prompt = json_data.get('negative_prompt', "")
+    characters = {}
+    for character in character_data:
+        c = character_data[character]
+        bubble = parse_bubble(c.get('bubble', None), default_bubble)
+        if bubble is None:
+            bubble = default_bubble
+        characters[character] = s.Character(character, c['tags'], bubble)
 
-        characters = {}
-        for character in character_data:
-            c = character_data[character]
-            bubble = parse_bubble(c.get('bubble', None), default_bubble)
-            if bubble is None:
-                bubble = default_bubble
-            characters[character] = s.Character(character, c['tags'], bubble)
+    script = s.script(raw_script)
 
-    with open(SCRIPT_FILE, 'r', encoding='utf-8') as file:
-        text = file.read()
-
-    script = s.script(text)
+    names, results = [], []
 
     for i, page in enumerate(script):
         panels_script = page.panels
@@ -133,7 +126,7 @@ if __name__ == '__main__':
             image_bgr = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
 
             # Encode the image into PNG format
-            retval, buffer = cv2.imencode('.png', image_bgr)
+            _, buffer = cv2.imencode('.png', image_bgr)
 
             # Convert the image buffer to base64
             img_str = base64.b64encode(buffer).decode('utf-8')
@@ -161,7 +154,8 @@ if __name__ == '__main__':
                 default_font=default_bubble[3],
             )
 
-        print(f'finished generation {page_id}.jpg')
-        canvas.save(f'output/pages/{page_id}.jpg')
+        names.append(f'{page_id}.jpg')
+        print(f'finished generation {names[-1]}')
+        results.append(canvas)
 
-    canvas.save('output/preview.jpg')
+    return names, results

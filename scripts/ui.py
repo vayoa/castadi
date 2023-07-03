@@ -1,6 +1,6 @@
 import modules.scripts as scripts
 import gradio as gr
-import os
+import main_runner as mr
 
 from modules import script_callbacks
 
@@ -82,10 +82,9 @@ def on_ui_tabs():
 
 
 def dummy_images(script, settings):
-    if (script):
-        return [
-            "https://chichi-pui.imgix.net/uploads/post_images/eee3b614-f126-4045-b53d-8bf38b98841d/05aba7f3-208b-4912-92f3-32d1bfc2edc3_1200x.jpeg?auto=format&lossless=0"
-        ]
+    if (script and settings):
+        names, results = mr.generate_images(script, settings)
+        return results
     else:
         return []
 
