@@ -114,7 +114,8 @@ def generate(raw_script, raw_settings):
         )
 
         if controlnet:
-            canvas.save(f'output/layouts/{page_id}.png')
+            names.append(f'{page_id}-layout.png')
+            results.append(canvas)
 
             # Convert the Pillow image to a NumPy array
             image_array = np.array(canvas)

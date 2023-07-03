@@ -69,6 +69,8 @@ def on_ui_tabs():
                 gallery = gr.Gallery(
                     label="Dummy Image",
                     show_label=False,
+                    preview=True,
+                    object_fit='scale-down',
                 )
 
         btn.click(
@@ -84,7 +86,7 @@ def dummy_images(script, settings):
     if (script and settings):
         settings = '\n'.join([l for l in settings.split(
             '\n') if not l.strip().startswith('//')])
-        names, results = mr.generate(script, settings)
+        _, results = mr.generate(script, settings)
         return results
     else:
         return []
