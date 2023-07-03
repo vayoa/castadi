@@ -84,7 +84,6 @@ location: public park, yard, outside, park
                 gallery = gr.Gallery(
                     label="Dummy Image",
                     show_label=False,
-                    preview=False,
                     object_fit='cover',
                 )
 
