@@ -6,6 +6,9 @@ from modules import script_callbacks
 
 
 def on_ui_tabs():
+    with open('settings.json', 'r') as file:
+        default_settings = file.read()
+
     with gr.Blocks(analytics_enabled=False) as ui_component:
         with gr.Row():
             with gr.Tab("Script"):
@@ -19,8 +22,7 @@ def on_ui_tabs():
                     language='json',
                     lines=20,
                     show_label=False,
-                ).style(
-
+                    value=default_settings,
                 )
 
             with gr.Column():
