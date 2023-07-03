@@ -78,7 +78,7 @@ def on_ui_tabs():
             outputs=[gallery],
         )
 
-        return [(ui_component, "Extension Example", "extension_example_tab")]
+        return [(ui_component, "Castadi", "castadi_tab")]
 
 
 def dummy_images(script, settings):
