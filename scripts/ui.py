@@ -83,7 +83,7 @@ def on_ui_tabs():
 
 def dummy_images(script, settings):
     if (script and settings):
-        names, results = mr.generate_images(script, settings)
+        names, results = mr.generate(script, settings)
         return results
     else:
         return []
