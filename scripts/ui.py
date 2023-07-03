@@ -70,7 +70,7 @@ def on_ui_tabs():
                     label="Dummy Image",
                     show_label=False,
                     preview=True,
-                    object_fit='scale-down',
+                    object_fit='cover',
                 )
 
         btn.click(
