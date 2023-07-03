@@ -4,7 +4,6 @@ import numpy as np
 import json
 import uuid
 from castadi import scripter as s, image_generator as ig, panel_generator as pg
-from PIL import Image
 from ast import literal_eval
 
 
@@ -116,7 +115,7 @@ def generate(raw_script, raw_settings):
 
         if controlnet:
             names.append(f'{page_id}-layout.png')
-            results.append(Image.copy(canvas))
+            results.append(canvas.copy())
 
             # Convert the Pillow image to a NumPy array
             image_array = np.array(canvas)
