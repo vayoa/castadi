@@ -73,8 +73,7 @@ def on_ui_tabs():
 
         btn.click(
             dummy_images,
-            inputs=[script, '\n'.join([l for l in settings.split(
-                '\n') if not l.strip().startswith('//')])],
+            inputs=[script, settings],
             outputs=[gallery],
         )
 
@@ -83,6 +82,8 @@ def on_ui_tabs():
 
 def dummy_images(script, settings):
     if (script and settings):
+        settings = '\n'.join([l for l in settings.split(
+            '\n') if not l.strip().startswith('//')])
         names, results = mr.generate(script, settings)
         return results
     else:
