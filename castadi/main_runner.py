@@ -74,7 +74,7 @@ def generate(raw_script, raw_settings):
     negative_prompt = json_data.get('negative_prompt', "")
 
     embeds = json_data.get('embeds', {'characters': {}, 'concepts': {}})
-    character_data = embeds.gets('characters', {})
+    character_data = embeds.get('characters', {})
     concepts = embeds.get('concepts', {})
     embeds['characters'] = character_data
     embeds['concepts'] = concepts
