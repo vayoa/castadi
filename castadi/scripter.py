@@ -46,7 +46,7 @@ class Event:
     def bake(self, characters, concepts):
         baked = bake_text(self.text, characters=characters)
         # we bake again to bake the concepts in tags
-        baked = bake_text(baked, embeds, concepts=concepts)
+        baked = bake_text(baked, concepts=concepts)
         return baked
 
     def bubble(self):
