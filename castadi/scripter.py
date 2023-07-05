@@ -139,7 +139,7 @@ def script(text, concepts):
         elif is_concept := re.search(r'(.+):(.+)', line):
             concept, definition = is_concept.group(1), is_concept.group(2)
             lst = current_concepts.get(concept, [])
-            lst.append(current_location).append(concept + f'__{len(lst)}')
+            lst.append(concept + f'__{len(lst)}')
             current_concepts[concept] = lst
 
             concepts[lst[-1]] = definition
