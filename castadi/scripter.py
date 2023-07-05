@@ -45,8 +45,11 @@ class Event:
 
     def bake(self, characters, concepts):
         baked = bake_text(self.text, characters=characters)
-        # we bake again to bake the concepts in tags
-        baked = bake_text(baked, concepts=concepts)
+        # we bake again until no concepts remain
+        i = 0
+        while '{' in baked and '}' in baked and i < 100:
+            baked = bake_text(baked, concepts=concepts)
+            i += 1
         return baked
 
     def bubble(self):
