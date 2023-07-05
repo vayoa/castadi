@@ -149,7 +149,7 @@ def script(text, concepts):
         elif line.startswith('split:'):
             split = line.replace('split:', '').strip()
             split = split.startswith('h') or split.startswith('H')
-        elif is_concept := re.search(r'(.+):(.+)', line):
+        elif is_concept := re.search(r'^(\S+):(.+)$', line):
             concept, definition = is_concept.group(1), is_concept.group(2)
             current_concepts[concept] = definition
         elif not line:
