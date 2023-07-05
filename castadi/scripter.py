@@ -2,6 +2,21 @@ from ast import literal_eval
 import re
 
 
+def bake_text(text, embeds, bake_characters=True, bake_concepts=True):
+
+    baked = text
+
+    if bake_characters:
+        baked = re.sub(r'\[(.*?)\]', lambda match: embeds['characters'].get(
+            match.group(1), match.group(0)).tags, text)
+
+    if bake_concepts:
+        baked = re.sub(r'\{(.*?)\}', lambda match: embeds['concepts'].get(
+            match.group(1), match.group(0)), text)
+
+    return baked[:-1] if baked.endswith('.') else baked
+
+
 class Character():
     def __init__(self, name, tags, bubble_props=None):
         self.name = name
@@ -20,12 +35,10 @@ class Event:
             self.character = characters[self.character.name]
 
     def bake(self, embeds):
-        characters, concepts = embeds['characters'], embeds['concepts']
-        baked = re.sub(r'\[(.*?)\]', lambda match: characters.get(
-            match.group(1), match.group(0)).tags, self.text)
-        baked = re.sub(r'\{(.*?)\}', lambda match: concepts.get(
-            match.group(1), match.group(0)).tags, self.text)
-        return baked[:-1] if baked.endswith('.') else baked
+        baked = bake_text(self.text, embeds)
+        # we bake again to bake tags
+        baked = bake_text(baked, embeds, bake_characters=False)
+        return baked
 
     def bubble(self):
         if self.character is None:
@@ -100,12 +113,13 @@ class Page:
             return [panel]
 
 
-def script(text):
+def script(text, concepts):
     lines = text.split('\n')
     pages = []
     current_page = None
     events = []
     current_location = None
+    current_concepts = {}
     split = None
     last_character = None
 
@@ -122,6 +136,13 @@ def script(text):
         elif line.startswith('split:'):
             split = line.replace('split:', '').strip()
             split = split.startswith('h') or split.startswith('H')
+        elif is_concept := re.search(r'(.+):(.+)', line):
+            concept, definition = is_concept.group(1), is_concept.group(2)
+            lst = current_concepts.get(concept, [])
+            lst.append(current_location).append(concept + f'__{len(lst)}')
+            current_concepts[concept] = lst
+
+            concepts[lst[-1]] = definition
         elif not line:
             if events:
                 current_page.panels.append(
