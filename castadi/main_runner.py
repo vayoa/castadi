@@ -89,11 +89,11 @@ def generate(raw_script, raw_settings):
 
     embeds['characters'] = characters
 
-    script = s.script(raw_script)
+    script = s.script(raw_script, concepts)
 
     names, results = [], []
 
-    for i, page in enumerate(script):
+    for page in script:
         panels_script = page.panels
         min_page_panel_size_perc = page.panel_min_percent or panel_min_percent
         min_page_size = (int(canvas_size[0] * min_page_panel_size_perc[0]), int(canvas_size[1] *
