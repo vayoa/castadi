@@ -2,19 +2,28 @@ from ast import literal_eval
 import re
 
 
-def bake_text(text, embeds, bake_characters=True, bake_concepts=True):
+def insert_tags(match, d, extract=None):
+    text = d.get(match.group(1), match.group(0))
+    if extract:
+        text = extract(text)
+    return text.strip()
+
+
+def bake_text(text, characters=None, concepts=None):
 
     baked = text
 
-    if bake_characters:
-        baked = re.sub(r'\[(.*?)\]', lambda match: embeds['characters'].get(
-            match.group(1), match.group(0)).tags, text)
+    if characters:
+        baked = re.sub(r'\[(.*?)\]', lambda match: insert_tags(match,
+                       characters, lambda c: c.tags), text)
 
-    if bake_concepts:
-        baked = re.sub(r'\{(.*?)\}', lambda match: embeds['concepts'].get(
-            match.group(1), match.group(0)), text)
+    if concepts:
+        baked = re.sub(
+            r'\{(.*?)\}', lambda match: insert_tags(match, concepts), text)
 
-    return baked[:-1] if baked.endswith('.') else baked
+    baked = baked.strip()
+
+    return baked[:-1] if baked.endswith(('.', ',')) else baked
 
 
 class Character():
@@ -34,10 +43,10 @@ class Event:
         if self.character is not None:
             self.character = characters[self.character.name]
 
-    def bake(self, embeds):
-        baked = bake_text(self.text, embeds)
-        # we bake again to bake tags
-        baked = bake_text(baked, embeds, bake_characters=False)
+    def bake(self, characters, concepts):
+        baked = bake_text(self.text, characters=characters)
+        # we bake again to bake the concepts in tags
+        baked = bake_text(baked, embeds, concepts=concepts)
         return baked
 
     def bubble(self):
@@ -49,17 +58,18 @@ class Event:
 
 
 class Panel:
-    def __init__(self, location=None, events=None, split_on_width=None):
+    def __init__(self, location=None, events=None, split_on_width=None, concepts=None):
         self.location = location
         self.events = events if events is not None else []
         self.split_on_width = split_on_width
+        self.concepts = concepts
 
     def prep(self, characters):
         for event in self.events:
             event.prep(characters)
 
-    def bake(self, embeds):
-        baked = ', '.join([e.bake(embeds)
+    def bake(self, characters):
+        baked = ', '.join([e.bake(characters, self.concepts)
                            for e in self.events if e.character is None])
         return baked + f', {self.location}'
 
@@ -119,7 +129,7 @@ def script(text, concepts):
     current_page = None
     events = []
     current_location = None
-    current_concepts = {}
+    current_concepts = concepts.copy()
     split = None
     last_character = None
 
@@ -138,15 +148,11 @@ def script(text, concepts):
             split = split.startswith('h') or split.startswith('H')
         elif is_concept := re.search(r'(.+):(.+)', line):
             concept, definition = is_concept.group(1), is_concept.group(2)
-            lst = current_concepts.get(concept, [])
-            lst.append(concept + f'__{len(lst)}')
-            current_concepts[concept] = lst
-
-            concepts[lst[-1]] = definition
+            current_concepts[concept] = definition
         elif not line:
             if events:
                 current_page.panels.append(
-                    Panel(current_location, events, split_on_width=split))
+                    Panel(current_location, events, split_on_width=split, concepts=current_concepts.copy()))
                 events = []
                 split = None
         else:
@@ -164,7 +170,7 @@ def script(text, concepts):
 
     if events:
         current_page.panels.append(
-            Panel(current_location, events, split_on_width=split))
+            Panel(current_location, events, split_on_width=split, concepts=current_concepts.copy()))
         events = []
         split = None
 

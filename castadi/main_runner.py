@@ -15,13 +15,13 @@ def save_encoded_image(img: str, output_path: str):
         image_file.write(img)
 
 
-def get_images(panels, panels_script, embeds, image_zoom,
+def get_images(panels, panels_script, characters, image_zoom,
                prompt_prefix=None, negative_prompt=None, page_id='0',
                controlnet_payload=None):
     images = []
     for i, (panel, panel_script) in enumerate(zip(panels, panels_script)):
         x, y, width, height = panel
-        baked = panel_script.bake(embeds)
+        baked = panel_script.bake(characters)
         width = int(width * image_zoom)
         height = int(height * image_zoom)
         print(
@@ -107,7 +107,7 @@ def generate(raw_script, raw_settings):
         controlnet = page.mode == 'controlnet'
 
         canvas = pg.draw_rectangles(
-            get_images(panels, panels_script, embeds, image_zoom,
+            get_images(panels, panels_script, characters, image_zoom,
                        prompt_prefix, negative_prompt, page_id) if not controlnet else None,
             panels,
             page.get_dialog() if not controlnet else None,
