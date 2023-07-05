@@ -29,16 +29,22 @@ DEFAULT_SETTINGS = r'''
   "prompt_prefix": "(masterpiece, best quality:1.1)",
   "negative_prompt": "(bad quality, low quality:1.1)",
 
-  "characters": {
-    // here is an example character:
-    // "character_name": {
-    //   "tags": "guy, male, short black hair, white pants, white shirt",
-    //   "bubble": {
-    //     "bubble_color": "(200, 200, 200)",
-    //     "text_color": "black"
-    //   }
-    // }
-  }
+  // "embeds": {
+  //   "concepts" : {
+  //   here is an example concept:
+  //   "spysuit": "black spy suit, tech"
+  //   },
+  //   "characters": {
+  //     here is an example character:
+  //     "character_name": {
+  //       "tags": "guy, male, short black hair, white pants, white shirt",
+  //       "bubble": {
+  //         "bubble_color": "(200, 200, 200)",
+  //         "text_color": "black"
+  //       }
+  //     }
+  //   }
+  // }
 }
 '''
 

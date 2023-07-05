@@ -15,13 +15,13 @@ def save_encoded_image(img: str, output_path: str):
         image_file.write(img)
 
 
-def get_images(panels, panels_script, characters, image_zoom,
+def get_images(panels, panels_script, embeds, image_zoom,
                prompt_prefix=None, negative_prompt=None, page_id='0',
                controlnet_payload=None):
     images = []
     for i, (panel, panel_script) in enumerate(zip(panels, panels_script)):
         x, y, width, height = panel
-        baked = panel_script.bake(characters)
+        baked = panel_script.bake(embeds)
         width = int(width * image_zoom)
         height = int(height * image_zoom)
         print(
@@ -57,7 +57,6 @@ def parse_bubble(bjs, default_bubble=(None, None, None, None)):
 
 def generate(raw_script, raw_settings):
     json_data = json.loads(raw_settings)
-    character_data = json_data.get('characters', {})
 
     canvas_size = json_data.get(
         'canvas_width', 480), json_data.get('canvas_height', 854)
@@ -74,6 +73,12 @@ def generate(raw_script, raw_settings):
     prompt_prefix = json_data.get('prompt_prefix', "")
     negative_prompt = json_data.get('negative_prompt', "")
 
+    embeds = json_data.get('embeds', {'characters': {}, 'concepts': {}})
+    character_data = embeds.gets('characters', {})
+    concepts = embeds.get('concepts', {})
+    embeds['characters'] = character_data
+    embeds['concepts'] = concepts
+
     characters = {}
     for character in character_data:
         c = character_data[character]
@@ -81,6 +86,8 @@ def generate(raw_script, raw_settings):
         if bubble is None:
             bubble = default_bubble
         characters[character] = s.Character(character, c['tags'], bubble)
+
+    embeds['characters'] = characters
 
     script = s.script(raw_script)
 
@@ -100,7 +107,7 @@ def generate(raw_script, raw_settings):
         controlnet = page.mode == 'controlnet'
 
         canvas = pg.draw_rectangles(
-            get_images(panels, panels_script, characters, image_zoom,
+            get_images(panels, panels_script, embeds, image_zoom,
                        prompt_prefix, negative_prompt, page_id) if not controlnet else None,
             panels,
             page.get_dialog() if not controlnet else None,

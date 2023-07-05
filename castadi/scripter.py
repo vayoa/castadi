@@ -19,8 +19,11 @@ class Event:
         if self.character is not None:
             self.character = characters[self.character.name]
 
-    def bake(self, characters):
+    def bake(self, embeds):
+        characters, concepts = embeds['characters'], embeds['concepts']
         baked = re.sub(r'\[(.*?)\]', lambda match: characters.get(
+            match.group(1), match.group(0)).tags, self.text)
+        baked = re.sub(r'\{(.*?)\}', lambda match: concepts.get(
             match.group(1), match.group(0)).tags, self.text)
         return baked[:-1] if baked.endswith('.') else baked
 
@@ -42,8 +45,8 @@ class Panel:
         for event in self.events:
             event.prep(characters)
 
-    def bake(self, characters):
-        baked = ', '.join([e.bake(characters)
+    def bake(self, embeds):
+        baked = ', '.join([e.bake(embeds)
                            for e in self.events if e.character is None])
         return baked + f', {self.location}'
 
