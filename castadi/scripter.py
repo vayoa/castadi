@@ -161,7 +161,7 @@ def script(text, concepts):
         else:
             words = line.split(' ')
             for word in words:
-                word = word.strip()
+                word = word.strip().replace(',', '')
                 if word.startswith('[') and word.endswith(']'):
                     last_character = word[1:-1]
 
