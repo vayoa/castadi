@@ -3,7 +3,9 @@ import cv2
 import numpy as np
 import json
 import uuid
-from castadi import scripter as s, image_generator as ig, panel_generator as pg
+import scripter as s
+import image_generator as ig
+import panel_generator as pg
 from ast import literal_eval
 
 
@@ -55,8 +57,11 @@ def parse_bubble(bjs, default_bubble=(None, None, None, None)):
             bjs.get('font', default_bubble[3]))
 
 
-def generate(raw_script, raw_settings):
-    json_data = json.loads(raw_settings)
+def generate(raw_script, raw_settings, draw=True):
+    if draw:
+        json_data = json.loads(raw_settings)
+    else:
+        json_data = raw_settings
 
     canvas_size = json_data.get(
         'canvas_width', 480), json_data.get('canvas_height', 854)
@@ -93,64 +98,26 @@ def generate(raw_script, raw_settings):
 
     names, results = [], []
 
-    for page in script:
-        panels_script = page.panels
-        min_page_panel_size_perc = page.panel_min_percent or panel_min_percent
-        min_page_size = (int(canvas_size[0] * min_page_panel_size_perc[0]), int(canvas_size[1] *
-                         min_page_panel_size_perc[1]))
+    if draw:
+        for page in script:
+            panels_script = page.panels
+            min_page_panel_size_perc = page.panel_min_percent or panel_min_percent
+            min_page_size = (int(canvas_size[0] * min_page_panel_size_perc[0]), int(canvas_size[1] *
+                                                                                    min_page_panel_size_perc[1]))
 
-        panels = pg.get_panels(len(panels_script), panels=[(0, 0, *canvas_size)],
-                               min_size=min_page_size, split_on_width=page.get_splits())
-        page_id = str(uuid.uuid4())
+            panels = pg.get_panels(len(panels_script), panels=[(0, 0, *canvas_size)],
+                                   min_size=min_page_size, split_on_width=page.get_splits())
+            page_id = str(uuid.uuid4())
 
-        page.prep(characters)
-        controlnet = page.mode == 'controlnet'
-
-        canvas = pg.draw_rectangles(
-            get_images(panels, panels_script, characters, image_zoom,
-                       prompt_prefix, negative_prompt, page_id) if not controlnet else None,
-            panels,
-            page.get_dialog() if not controlnet else None,
-            reverse=controlnet,
-            outline_width=outline_width,
-            canvas_size=canvas_size,
-            default_font_size=default_bubble[0],
-            default_bubble_color=default_bubble[1],
-            default_text_color=default_bubble[2],
-            default_font=default_bubble[3],
-        )
-
-        if controlnet:
-            names.append(f'{page_id}-layout.png')
-            results.append(canvas.copy())
-
-            # Convert the Pillow image to a NumPy array
-            image_array = np.array(canvas)
-
-            # Convert the NumPy array to BGR order (required by cv2)
-            image_bgr = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
-
-            # Encode the image into PNG format
-            _, buffer = cv2.imencode('.png', image_bgr)
-
-            # Convert the image buffer to base64
-            img_str = base64.b64encode(buffer).decode('utf-8')
-
-            panel = [(0, 0, *canvas_size)]
+            page.prep(characters)
+            controlnet = page.mode == 'controlnet'
 
             canvas = pg.draw_rectangles(
-                None,
+                get_images(panels, panels_script, characters, image_zoom,
+                           prompt_prefix, negative_prompt, page_id) if not controlnet else None,
                 panels,
-                page.get_dialog(),
-                background=get_images(panel, panels_script, characters, image_zoom,
-                                      prompt_prefix, negative_prompt, page_id,
-                                      controlnet_payload={
-                                          "input_image": img_str,
-                                          "module": "none",
-                                          "model": "control_v11p_sd15s2_lineart_anime [3825e83e]",
-                                          "weight": 2,
-                                          "control_mode": 2,
-                                      })[0],
+                page.get_dialog() if not controlnet else None,
+                reverse=controlnet,
                 outline_width=outline_width,
                 canvas_size=canvas_size,
                 default_font_size=default_bubble[0],
@@ -159,8 +126,49 @@ def generate(raw_script, raw_settings):
                 default_font=default_bubble[3],
             )
 
-        names.append(f'{page_id}.jpg')
-        print(f'finished generation {names[-1]}')
-        results.append(canvas)
+            if controlnet:
+                names.append(f'{page_id}-layout.png')
+                results.append(canvas.copy())
 
-    return names, results
+                # Convert the Pillow image to a NumPy array
+                image_array = np.array(canvas)
+
+                # Convert the NumPy array to BGR order (required by cv2)
+                image_bgr = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
+
+                # Encode the image into PNG format
+                _, buffer = cv2.imencode('.png', image_bgr)
+
+                # Convert the image buffer to base64
+                img_str = base64.b64encode(buffer).decode('utf-8')
+
+                panel = [(0, 0, *canvas_size)]
+
+                canvas = pg.draw_rectangles(
+                    None,
+                    panels,
+                    page.get_dialog(),
+                    background=get_images(panel, panels_script, characters, image_zoom,
+                                          prompt_prefix, negative_prompt, page_id,
+                                          controlnet_payload={
+                                              "input_image": img_str,
+                                              "module": "none",
+                                              "model": "control_v11p_sd15s2_lineart_anime [3825e83e]",
+                                              "weight": 2,
+                                              "control_mode": 2,
+                                          })[0],
+                    outline_width=outline_width,
+                    canvas_size=canvas_size,
+                    default_font_size=default_bubble[0],
+                    default_bubble_color=default_bubble[1],
+                    default_text_color=default_bubble[2],
+                    default_font=default_bubble[3],
+                )
+
+            names.append(f'{page_id}.jpg')
+            print(f'finished generation {names[-1]}')
+            results.append(canvas)
+
+        return names, results
+    else:
+        return [panel.bake(characters) for page in script for panel in page.panels]
