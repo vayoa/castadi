@@ -88,7 +88,7 @@ def generate(script, raw_settings, draw=True, location=None, last_script=None):
     if draw:
         for i, page in enumerate(script):
             if not isinstance(page, d.DrawnPage):
-                page = d.DrawnPage(page, settings)
+                page = d.DrawnPage.from_page(page, settings)
 
             new_names, new_results = page.draw(
                 settings, panel=loc_panel if i == loc_page else None
