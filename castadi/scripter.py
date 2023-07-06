@@ -50,10 +50,16 @@ class Event:
 
     @staticmethod
     def from_dict(d):
-        return Event(d["text"], Character.from_dict(["character"]))
+        c = None
+        if "character" in d:
+            c = Character.from_dict(d["character"])
+        return Event(d["text"], c)
 
     def to_dict(self):
-        return {"text": self.text, "character": self.character.to_dict()}
+        d = {"text": self.text}
+        if self.character is not None:
+            d["character"] = self.character.to_dict()
+        return d
 
     def prep(self, characters):
         if self.character is not None:
