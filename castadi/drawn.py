@@ -17,6 +17,29 @@ class DrawnPanel(s.Panel):
         self.image_bytes = image_bytes
         self.dimensions = dimensions
 
+    @staticmethod
+    def from_dict(d):
+        return DrawnPanel(
+            s.Panel(
+                d["location"],
+                [s.Event.from_dict(event) for event in d["events"]],
+                d["split_on_width"],
+                d["concepts"],
+            ),
+            d["image_bytes"],
+            d["dimensions"],
+        )
+
+    def to_dict(self):
+        return {
+            "location": self.location,
+            "events": [event.to_dict() for event in self.events],
+            "split_on_width": self.split_on_width,
+            "concepts": self.concepts,
+            "image_bytes": self.image_bytes,
+            "dimensions": self.dimensions,
+        }
+
     def draw(
         self,
         settings,
@@ -49,7 +72,15 @@ class DrawnPanel(s.Panel):
 
 
 class DrawnPage(s.Page):
-    def __init__(self, page, settings):
+    def __init__(self, name, panels, panel_min_percent, mode, controlnet):
+        self.name = name
+        self.panels = panels
+        self.panel_min_percent = panel_min_percent
+        self.mode = mode
+        self.controlnet = controlnet
+
+    @staticmethod
+    def from_page(page, settings):
         canvas_size = settings["canvas_size"]
 
         min_page_panel_size_perc = (
@@ -68,7 +99,7 @@ class DrawnPage(s.Page):
             split_on_width=page.get_splits(),
         )
 
-        super().__init__(
+        p = DrawnPage(
             page.name,
             [
                 DrawnPanel(panel, dimensions)
@@ -76,9 +107,29 @@ class DrawnPage(s.Page):
             ],
             page.panel_min_percent,
             page.mode,
+            page.mode == "controlnet",
         )
-        self.controlnet = self.mode == "controlnet"
-        self.prep(settings["embeds"]["characters"])
+        p.prep(settings["embeds"]["characters"])
+        return p
+
+    @staticmethod
+    def from_dict(d):
+        return DrawnPage(
+            d["name"],
+            [DrawnPanel.from_dict(panel) for panel in d["panels"]],
+            d["panel_min_percent"],
+            d["mode"],
+            d["controlnet"],
+        )
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "panels": [panel.to_dict() for panel in self.panels],
+            "panel_min_percent": self.panel_min_percent,
+            "mode": self.mode,
+            "controlnet": self.controlnet,
+        }
 
     def get_images(self, settings, controlnet_payload=None, draw_only=None):
         images = []
@@ -158,3 +209,11 @@ class DrawnPage(s.Page):
             old.update(new)
         self.prep(settings["embeds"]["characters"])
         return self
+
+
+def script_from_dict(d):
+    return [DrawnPage.from_dict(page) for page in d]
+
+
+def script_to_dict(script):
+    return [page.to_dict() for page in script]

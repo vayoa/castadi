@@ -104,37 +104,3 @@ def generate(script, raw_settings, draw=True, location=None, last_script=None):
             for page in script
             for panel in page.panels
         ]
-
-
-if __name__ == "__main__":
-    with open("example/settings.json") as file:
-        raw_settings = file.read()
-
-    text = """\
--Page1(min: 0.4, 0.4)
-location: space, galaxy
-
-[misty] flying
-"heyy"
-
-[misty] landing
-"yooo"
-"""
-
-    text2 = """\
--Page1(min: 0.4, 0.4)
-location: space, galaxy
-
-[misty] flying
-"heyy"
-
-[bea] flying
-"yooo"
-"""
-
-    names, results, new_script = generate(text, raw_settings)
-    results[-1].show()
-    names, results, new_script = generate(
-        text2, raw_settings, location=(0, 1), last_script=new_script
-    )
-    results[-1].show()

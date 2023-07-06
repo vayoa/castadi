@@ -33,6 +33,13 @@ class Character:
         self.tags = tags
         self.bubble_props = bubble_props
 
+    @staticmethod
+    def from_dict(d):
+        return Character(d["name"], d["tags"], d["bubble_props"])
+
+    def to_dict(self):
+        return {"name": self.name, "tags": self.tags, "bubble_props": self.bubble_props}
+
 
 class Event:
     def __init__(self, text, character=None):
@@ -40,6 +47,13 @@ class Event:
         self.character = (
             Character(character, character) if character is not None else None
         )
+
+    @staticmethod
+    def from_dict(d):
+        return Event(d["text"], Character.from_dict(["character"]))
+
+    def to_dict(self):
+        return {"text": self.text, "character": self.character.to_dict()}
 
     def prep(self, characters):
         if self.character is not None:

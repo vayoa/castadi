@@ -1,10 +1,10 @@
 import modules.scripts as scripts
 import gradio as gr
-from castadi import main_runner as mr
+from castadi import main_runner as mr, drawn as d
 
 from modules import script_callbacks
 
-DEFAULT_SETTINGS = r'''
+DEFAULT_SETTINGS = r"""
 {
   "canvas_width": 1080,
   "canvas_height": 1920,
@@ -27,7 +27,7 @@ DEFAULT_SETTINGS = r'''
   },
 
   "prompt_prefix": "(masterpiece, best quality:1.1)",
-  "negative_prompt": "(bad quality, low quality:1.1)",
+  "negative_prompt": "(bad quality, low quality:1.1)"
 
   // "embeds": {
   //   "concepts" : {
@@ -46,17 +46,9 @@ DEFAULT_SETTINGS = r'''
   //   }
   // }
 }
-'''
-
-
-def on_ui_tabs():
-    with gr.Blocks(analytics_enabled=False) as ui_component:
-        with gr.Row():
-            with gr.Tab("Script"):
-                script = gr.TextArea(
-                    lines=20,
-                    label='start with --api for this extension to work.',
-                    placeholder='''Your script, example:
+"""
+DEFAULT_SCRIPT = """\
+Your script, example:
 -Page1
 
 location: public park, yard, outside, park
@@ -69,47 +61,71 @@ location: public park, yard, outside, park
 
 [misty] curious, surpries, happy, question
 "What do you think?"
+"""
 
-                    '''
+
+def on_ui_tabs():
+    with gr.Blocks(analytics_enabled=False) as ui_component:
+        last_script = gr.State({})
+        with gr.Row():
+            with gr.Tab("Script"):
+                script = gr.TextArea(
+                    lines=20,
+                    label="start with --api for this extension to work.",
+                    placeholder=DEFAULT_SCRIPT,
                 )
 
             with gr.Tab("Settings"):
                 settings = gr.Code(
-                    language='json',
+                    language="json",
                     lines=20,
                     show_label=False,
                     value=DEFAULT_SETTINGS,
                 )
 
             with gr.Column():
-                btn = gr.Button(
-                    "Generate",
-                    variant='primary'
-                )
+                with gr.Row():
+                    btn = gr.Button("Generate", variant="primary")
+                    page = gr.Number(label="Page", percision=0, minimum=1)
+                    panel = gr.Number(label="Panel", percision=0, minimum=1)
+                    chk = gr.Checkbox(label="Full Page", value=True)
 
                 gallery = gr.Gallery(
                     label="Dummy Image",
                     show_label=False,
-                    object_fit='cover',
+                    object_fit="cover",
                 )
 
         btn.click(
-            dummy_images,
-            inputs=[script, settings],
-            outputs=[gallery],
+            generate,
+            inputs=[script, last_script, settings, chk, page, panel],
+            outputs=[gallery, last_script],
         )
 
         return [(ui_component, "Castadi", "castadi_tab")]
 
 
-def dummy_images(script, settings):
-    if (script and settings):
-        settings = '\n'.join([l for l in settings.split(
-            '\n') if not l.strip().startswith('//')])
-        _, results = mr.generate(script, settings)
-        return results
+def remove_json_comments(json):
+    return "\n".join([l for l in json.split("\n") if not l.strip().startswith("//")])
+
+
+def generate(script, last_script, settings, chk, page, panel):
+    if script and settings:
+        if chk:
+            last_script, location = None, None
+        else:
+            last_script, location = d.script_from_dict(last_script), (page, panel)
+
+        settings = remove_json_comments(settings)
+        _, results, new_script = mr.generate(
+            script,
+            settings,
+            last_script=last_script,
+            location=location,
+        )
+        return [results, d.script_to_dict(new_script)]
     else:
-        return []
+        return [[], {}]
 
 
 script_callbacks.on_ui_tabs(on_ui_tabs)
