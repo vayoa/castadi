@@ -41,6 +41,12 @@ class DrawnPanel(s.Panel):
         _, _, width, height = self.dimensions
         return Image.new("RGB", (width, height), "white")
 
+    def update(self, panel):
+        self.location = panel.location
+        self.events = panel.events
+        self.split_on_width = panel.split_on_width
+        self.concepts = panel.concepts
+
 
 class DrawnPage(s.Page):
     def __init__(self, page, settings):
@@ -146,3 +152,9 @@ class DrawnPage(s.Page):
         results.append(canvas)
 
         return names, results
+
+    def update(self, page, settings):
+        for old, new in zip(self.panels, page.panels):
+            old.update(new)
+        self.prep(settings["embeds"]["characters"])
+        return self

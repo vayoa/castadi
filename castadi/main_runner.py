@@ -69,15 +69,21 @@ def get_settings(json_data):
     return settings
 
 
-def generate(script, raw_settings, draw=True, location=None):
+def generate(script, raw_settings, draw=True, location=None, last_script=None):
     settings = get_settings(json.loads(raw_settings) if draw else raw_settings)
-    if isinstance(script, str):
-        script = s.script(script, settings["embeds"]["concepts"])
+    script = s.script(script, settings["embeds"]["concepts"])
+
+    loc_page, loc_panel = None, None
+
+    if location is not None and last_script is not None:
+        loc_page, loc_panel = location
+        script = [
+            old_page.update(new_page, settings)
+            for old_page, new_page in zip(last_script, script)
+        ]
 
     names, results = [], []
     new_script = []
-
-    loc_page, loc_panel = location or (None, None)
 
     if draw:
         for i, page in enumerate(script):
@@ -98,3 +104,37 @@ def generate(script, raw_settings, draw=True, location=None):
             for page in script
             for panel in page.panels
         ]
+
+
+if __name__ == "__main__":
+    with open("example/settings.json") as file:
+        raw_settings = file.read()
+
+    text = """\
+-Page1(min: 0.4, 0.4)
+location: space, galaxy
+
+[misty] flying
+"heyy"
+
+[misty] landing
+"yooo"
+"""
+
+    text2 = """\
+-Page1(min: 0.4, 0.4)
+location: space, galaxy
+
+[misty] flying
+"heyy"
+
+[bea] flying
+"yooo"
+"""
+
+    names, results, new_script = generate(text, raw_settings)
+    results[-1].show()
+    names, results, new_script = generate(
+        text2, raw_settings, location=(0, 1), last_script=new_script
+    )
+    results[-1].show()
