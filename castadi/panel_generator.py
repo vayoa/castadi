@@ -3,34 +3,47 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from io import BytesIO
 
 
-def draw_rectangles(images, locations, bubbles=None, outline_width=5,
-                    canvas_size=(1080, 1920),
-                    default_font_size=12,
-                    default_bubble_color=(20, 20, 20),
-                    default_text_color="white",
-                    default_font='C:\Windows\Fonts\CascadiaMonoPL-ExtraLight.ttf',
-                    reverse=False,
-                    b_big_var=0.3, b_small_var=0.15,
-                    background=None
-                    ):
+def draw_rectangles(
+    images,
+    locations,
+    bubbles,
+    settings,
+    reverse=False,
+    b_big_var=0.3,
+    b_small_var=0.15,
+    background=None,
+):
+    outline_width = settings["outline_width"]
+    canvas_size = settings["canvas_size"]
+    default_font_size = settings["default_bubble"][0]
+    default_bubble_color = settings["default_bubble"][1]
+    default_text_color = settings["default_bubble"][2]
+    default_font = settings["default_bubble"][3]
+
     canvas_width, canvas_height = canvas_size
 
     # Create a blank canvas
     if background is None:
-        canvas = Image.new("RGB", (canvas_width, canvas_height),
-                           "black" if reverse else "white")
+        canvas = Image.new(
+            "RGB", (canvas_width, canvas_height), "black" if reverse else "white"
+        )
     else:
         background = Image.open(BytesIO(background))
         canvas = background.resize(canvas_size, Image.ANTIALIAS)
 
     draw = ImageDraw.Draw(canvas)
 
-    for image, location, bubble_list in zip(images or [None] * len(locations), locations, bubbles or [None] * len(locations)):
+    for image, location, bubble_list in zip(
+        images or [None] * len(locations), locations, bubbles or [None] * len(locations)
+    ):
         x, y, width, height = location
 
         if image:
-            # Load the image from base64 encoding
-            img = Image.open(BytesIO(image))
+            if isinstance(image, bytes):
+                # Load the image from base64 encoding
+                img = Image.open(BytesIO(image))
+            else:
+                img = image
 
             # Resize the image to fit within the specified width and height
             img = img.resize((width, height), Image.ANTIALIAS)
@@ -49,14 +62,22 @@ def draw_rectangles(images, locations, bubbles=None, outline_width=5,
 
         if background is None:
             # Draw the rectangle outline with increased width
-            draw.rectangle([top_left, bottom_right],
-                           outline="white" if reverse else "black",
-                           width=int(outline_width * 2) if reversed else outline_width)
+            draw.rectangle(
+                [top_left, bottom_right],
+                outline="white" if reverse else "black",
+                width=int(outline_width * 2) if reversed else outline_width,
+            )
 
         if bubble_list is not None:
             b_positions = [(x, y)]
             for bubble_i, bubble in enumerate(bubble_list):
-                bubble_text, bubble_font_size, bubble_color, font_color, font_name = bubble
+                (
+                    bubble_text,
+                    bubble_font_size,
+                    bubble_color,
+                    font_color,
+                    font_name,
+                ) = bubble
 
                 bubble_color = bubble_color or default_bubble_color
                 font_color = font_color or default_text_color
@@ -71,34 +92,47 @@ def draw_rectangles(images, locations, bubbles=None, outline_width=5,
 
                 width_bigger = width > height
                 bubble_x = random.randint(
-                    last_x, last_x + int(width * mod * (b_big_var if width_bigger else b_small_var)))
+                    last_x,
+                    last_x
+                    + int(width * mod * (b_big_var if width_bigger else b_small_var)),
+                )
                 # Vary y-coordinate within top 30% of the panel
                 bubble_y = random.randint(
-                    last_y, last_y + int(height * mod * (b_small_var if width_bigger else b_big_var)))
+                    last_y,
+                    last_y
+                    + int(height * mod * (b_small_var if width_bigger else b_big_var)),
+                )
                 bubble_width = 0.75 * bubble_font_size  # Initial width for auto-sizing
-                bubble_height = 0.55 * bubble_font_size  # Initial height for auto-sizing
+                bubble_height = (
+                    0.55 * bubble_font_size
+                )  # Initial height for auto-sizing
 
                 # Update the bubble size to fit the text
                 bubble_font = ImageFont.truetype(font_name, bubble_font_size)
                 bubble_text_width, bubble_text_height = draw.textsize(
-                    bubble_text, font=bubble_font)
+                    bubble_text, font=bubble_font
+                )
                 bubble_width += bubble_text_width + 10  # Add padding
                 bubble_height += bubble_text_height + 10  # Add padding
 
                 # Draw the speech bubble rectangle with the specified color
                 bubble_top_left = (bubble_x, bubble_y)
                 bubble_bottom_right = (
-                    bubble_x + bubble_width, bubble_y + bubble_height)
+                    bubble_x + bubble_width,
+                    bubble_y + bubble_height,
+                )
                 draw.rectangle(
-                    [bubble_top_left, bubble_bottom_right], fill=bubble_color)
+                    [bubble_top_left, bubble_bottom_right], fill=bubble_color
+                )
 
                 b_positions.append((bubble_x, int(bubble_y + bubble_height)))
 
                 # Add text inside the speech bubble with the specified font color
                 text_x = bubble_x + 10  # Add padding
                 text_y = bubble_y + 10  # Add padding
-                draw.text((text_x, text_y), bubble_text,
-                          fill=font_color, font=bubble_font)
+                draw.text(
+                    (text_x, text_y), bubble_text, fill=font_color, font=bubble_font
+                )
 
     if images is None and reverse:
         canvas = canvas.filter(ImageFilter.GaussianBlur(4))
@@ -110,8 +144,9 @@ def draw_rectangles(images, locations, bubbles=None, outline_width=5,
             top_left = x, y
             bottom_right = x + width, y + height
 
-            draw.rectangle([top_left, bottom_right],
-                           outline="black", width=outline_width)
+            draw.rectangle(
+                [top_left, bottom_right], outline="black", width=outline_width
+            )
 
     return canvas
 
@@ -138,29 +173,40 @@ def split_rec(rec, min_size, split_on_width=None):
         return [rec]
     else:
         can_split_width = split_width >= min_width
-        split_on_width = split_on_width if split_on_width is not None and can_split_width else not can_split_width or (
-            split_height >= min_height and random.choice([True, False]))
+        split_on_width = (
+            split_on_width
+            if split_on_width is not None and can_split_width
+            else not can_split_width
+            or (split_height >= min_height and random.choice([True, False]))
+        )
 
     if split_on_width:
         # Split on height
-        split_point = height if height == min_height else random.randint(
-            min_height, height - min_height)
+        split_point = (
+            height
+            if height == min_height
+            else random.randint(min_height, height - min_height)
+        )
         return [
             (x, y, width, split_point),
-            (x, y + split_point, width, height - split_point)
+            (x, y + split_point, width, height - split_point),
         ]
     else:
         # Split on width
-        split_point = width if width == min_width else random.randint(
-            min_width, width - min_width)
+        split_point = (
+            width
+            if width == min_width
+            else random.randint(min_width, width - min_width)
+        )
         return [
             (x, y, split_point, height),
-            (x + split_point, y, width - split_point, height)
+            (x + split_point, y, width - split_point, height),
         ]
 
 
-def get_panels(n, panels=[(0, 0, 1080, 1920)], min_size=(227, 225),
-               split_on_width=None):
+def get_panels(
+    n, panels=[(0, 0, 1080, 1920)], min_size=(227, 225), split_on_width=None
+):
     if n == 1:
         return sorted(panels, key=lambda p: (p[0], p[1]))
 
@@ -189,4 +235,4 @@ def get_panels(n, panels=[(0, 0, 1080, 1920)], min_size=(227, 225),
     to_split = panels.pop(i)
     panels.extend(split_rec(to_split, min_size, split_on_width=split))
 
-    return get_panels(n-1, panels, min_size, split_on_width)
+    return get_panels(n - 1, panels, min_size, split_on_width)
