@@ -26,8 +26,8 @@ class DrawnPanel(s.Panel):
                 d["split_on_width"],
                 d["concepts"],
             ),
-            d["image_bytes"],
             d["dimensions"],
+            d["image_bytes"],
         )
 
     def to_dict(self):
